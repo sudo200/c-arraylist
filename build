@@ -1,0 +1,5 @@
+#!/bin/sh
+
+gcc -g -pedantic -Wall -std=c99 *.c
+#rm *.gch
+
