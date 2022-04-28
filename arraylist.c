@@ -16,7 +16,7 @@ size_t arraylist_getlength(arraylist * list)
 
 arraylist * arraylist_new(void)
 {
-  arraylist * list = malloc(sizeof(arraylist));
+  arraylist * list = (arraylist *)malloc(sizeof(arraylist));
   *list = (arraylist) {
     (void **)malloc(sizeof(void *)),
   };
@@ -45,7 +45,7 @@ arraylist * arraylist_add(arraylist * list, void * item)
 
   size_t len = arraylist_getlength(list);
 
-  list->array = realloc(list->array, sizeof(void *) * (len + 1));
+  list->array = (void **)realloc(list->array, sizeof(void *) * (len + 1));
   *(list->array + len-1) = item;
   *(list->array + len) = NULL;
   return list;
@@ -83,8 +83,11 @@ void arraylist_destroy(arraylist * list)
 
 arraylist * arraylist_foreach(arraylist * list, void (*func)(void *))
 {
-  if(list == NULL || func == NULL)
+  if(list == NULL)
     return NULL;
+  
+  if(func == NULL)
+    return list;
 
   for(void ** arr = list->array; *(int *)arr; arr++)
     func(*arr);
