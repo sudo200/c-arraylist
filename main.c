@@ -17,6 +17,8 @@ int main()
   arraylist_add(list, "my friends");
 
   arraylist_foreach(list, myFunc);
+  
+  arraylist_destroy(list);
 
   return 0;
 }
