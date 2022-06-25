@@ -1,5 +1,5 @@
 #!/bin/sh
 
-gcc -g -pedantic -Wall -std=c99 *.c
+gcc -o out/arraylist -I include -pedantic -Wall -std=c99 src/*.c test/*.c
 #rm *.gch
 

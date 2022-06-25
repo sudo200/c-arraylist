@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "arraylist.h"
+#include <arraylist.h>
 
 void myFunc(void *ptr)
 {
@@ -15,6 +15,10 @@ int main()
   arraylist_add(list, "Hello");
   arraylist_add(list, "there!");
   arraylist_add(list, "my friends");
+
+  puts((const char *) arraylist_get(list, 2));
+
+  puts((const char *) arraylist_remove(list, 2));
 
   arraylist_foreach(list, myFunc);
   
