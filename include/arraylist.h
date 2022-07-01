@@ -10,8 +10,8 @@
 typedef struct arraylist arraylist;
 
 
-typedef void * (*allocator_t)(size_t);
-typedef void (*deallocator_t)(void *);
+typedef void * (*alloc_t)(size_t);
+typedef void (*dealloc_t)(void *);
 
 /**
  * Get the length of the arraylist
@@ -35,7 +35,7 @@ arraylist * arraylist_new(void);
  *
  * Useful for environments, where malloc and free cannot be used.
  */
-arraylist * arraylist_new_custom_alloc(allocator_t alloc, deallocator_t dealloc);
+arraylist * arraylist_new_custom_alloc(alloc_t alloc, dealloc_t dealloc);
 
 /**
  * Get an item from the arraylist at given index.

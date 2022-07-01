@@ -1,0 +1,4 @@
+#!/bin/sh
+
+valgrind ./out/arraylist 2>&1 | less
+

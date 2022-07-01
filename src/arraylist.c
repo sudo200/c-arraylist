@@ -1,19 +1,32 @@
 #include <arraylist.h>
 
 struct arraylist {
-  allocator_t alloc;
-  deallocator_t dealloc;
+  alloc_t alloc;
+  dealloc_t dealloc;
+
   void ** array;
+  size_t len;
 };
+
+
+void * __resize(alloc_t alloc, dealloc_t dealloc, void * ptr, size_t bytes_to_copy, size_t bytes_to_alloc)
+{
+  void * newptr = memmove(
+        alloc(bytes_to_alloc),
+        ptr,
+        bytes_to_copy
+      );
+  dealloc(ptr);
+  return newptr;
+}
+
 
 size_t arraylist_getlength(arraylist * list)
 {
   if(list == NULL)
     return 0;
 
-  size_t len = 1;
-  for(void ** arr = list->array; *(int *)arr; arr++, len++);
-  return len;
+  return list->len;
 }
 
 #ifndef NO_STDLIB
@@ -23,16 +36,16 @@ arraylist * arraylist_new(void)
 }
 #endif//NO_STDLIB
 
-arraylist * arraylist_new_custom_alloc(allocator_t alloc, deallocator_t dealloc)
+arraylist * arraylist_new_custom_alloc(alloc_t alloc, dealloc_t dealloc)
 {
   arraylist * list = (arraylist *) alloc(sizeof(arraylist));
   *list = (arraylist) {
     alloc,
     dealloc,
-    (void **) alloc(sizeof(void *)),
-  };
 
-  *(list->array) = NULL;
+    NULL,
+    0,
+  };
 
   return list;
 }
@@ -42,11 +55,10 @@ void * arraylist_get(arraylist * list, size_t index)
   if(list == NULL)
     return NULL;
 
-  size_t len = arraylist_getlength(list);
-  if(index >= len)
+  if(index >= list->len)
     return NULL;
 
-  return *(list->array + index);
+  return list->array[index];
 }
 
 arraylist * arraylist_add(arraylist * list, void * item)
@@ -54,18 +66,20 @@ arraylist * arraylist_add(arraylist * list, void * item)
   if(list == NULL)
     return NULL;
 
-  size_t len = arraylist_getlength(list);
+  if(list->len > 0)
+    list->array = (void **) __resize(
+        list->alloc,
+        list->dealloc,
+        list->array,
+        list->len * sizeof(void *),
+        (list->len + 1) * sizeof(void *)
+        );
+  else
+    list->array = (void **) malloc(sizeof(void *));
 
-  void ** newarray = (void **) memcpy(
-      list->alloc(sizeof(void *) * (len + 1)),
-      list->array,
-      sizeof(void *) * len
-      );
-  list->dealloc(list->array);
-  list->array = newarray;
-
-  *(list->array + len-1) = item;
-  *(list->array + len) = NULL;
+  list->array[list->len] = item;
+  list->len = list->len + 1;
+  
   return list;
 }
 
@@ -74,22 +88,23 @@ void * arraylist_remove(arraylist * list, size_t i)
   if(list == NULL)
     return NULL;
 
-  size_t len = arraylist_getlength(list);
-
-  if(i >= len)
+  if(i >= list->len)
     return NULL;
 
-  void * item = *(list->array + i);
-  for(size_t index = i; index < len; index++)
-    *(list->array + index) = *(list->array + index +1);
+  void * item = list->array[i];
 
-  void ** newarray = (void **) memcpy(
-      list->alloc(sizeof(void *) * (len - 1)),
+  list->len = list->len - 1;
+
+  for(size_t index = i; index < list->len; index++)
+    list->array[index] = list->array[index + 1];
+
+  list->array = __resize(
+      list->alloc,
+      list->dealloc,
       list->array,
-      sizeof(void *) * (len - 1)
+      (list->len) * sizeof(void *),
+      (list->len + 1) * sizeof(void *)
       );
-  list->dealloc(list->array);
-  list->array = newarray;
 
   return item;
 }
@@ -99,7 +114,7 @@ void arraylist_destroy(arraylist * list)
   if(list == NULL)
     return;
 
-  list->dealloc(list->array);
+  if(list->len > 0)  list->dealloc(list->array);
   list->dealloc(list);
 }
 
@@ -111,8 +126,8 @@ arraylist * arraylist_foreach(arraylist * list, void (*func)(void *))
   if(func == NULL)
     return list;
 
-  for(void ** arr = list->array; *(int *)arr; arr++)
-    func(*arr);
+  for(size_t i = 0; i < list->len; i++)
+    func(list->array[i]);
 
   return list;
 }
